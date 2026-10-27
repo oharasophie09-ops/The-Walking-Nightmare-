@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Waking Nightmare: Sleep Lab Shift 404</title>
+  <style>
+    :root {
+      --bg-dark: #0a0b10;
+      --bg-card: #121420;
+      --text-main: #f0f2f5;
+      --text-muted: #a0a5b5;
+      --primary: #8a2be2;
+      --primary-glow: rgba(138, 43, 226, 0.4);
+      --correct: #00ff88;
+      --correct-glow: rgba(0, 255, 136, 0.3);
+      --incorrect: #ff3366;
+      --incorrect-glow: rgba(255, 51, 102, 0.3);
+      --amber: #ffaa00;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: var(--bg-card);
+      border-radius: 16px;
+      border: 1px solid #23263a;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      padding: 30px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    h1 {
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 10px;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+    }
+
+    /* Scoreboard and HUD */
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1a1d30;
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      border: 1px solid #2d314e;
+    }
+
+    .hud-item {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: var(--text-muted);
+    }
+
+    .hud-value {
+      color: #fff;
+      font-size: 1.1rem;
+    }
+
+    .hud-value.score { color: var(--amber); }
+    .hud-value.multiplier { color: #00e1ff; }
+
+    /* Progress Bar */
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background: #1a1d30;
+      border-radius: 3px;
+      margin-bottom: 30px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), #00e1ff);
+      transition: width 0.4s ease;
+    }
+
+    /* Question Display */
+    .question-box {
+      margin-bottom: 25px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(138, 43, 226, 0.2);
+      border: 1px solid var(--primary);
+      color: #c19bf5;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .question-text {
+      font-size: 1.2rem;
+      line-height: 1.5;
+      color: #fff;
+    }
+
+    /* Options Grid */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .option-btn {
+      background: #1a1d30;
+      border: 1px solid #2d314e;
+      color: var(--text-main);
+      padding: 16px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      font-size: 1rem;
+      line-height: 1.4;
+      transition: all 0.2s ease;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      background: #242946;
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .option-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .option-btn.correct-choice {
+      background: rgba(0, 255, 136, 0.1) !important;
+      border-color: var(--correct) !important;
+      color: #fff;
+      box-shadow: 0 0 15px var(--correct-glow);
+    }
+
+    .option-btn.incorrect-choice {
+      background: rgba(255, 51, 102, 0.1) !important;
+      border-color: var(--incorrect) !important;
+      color: #fff;
+      box-shadow: 0 0 15px var(--incorrect-glow);
+    }
+
+    /* Feedback Window */
+    .feedback-box {
+      background: #151828;
+      border-left: 4px solid var(--primary);
+      padding: 15px 20px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 25px;
+      display: none;
+    }
+
+    .feedback-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 1.05rem;
+    }
+
+    .feedback-text {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    /* Next Button */
+    .action-row {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+      box-shadow: 0 4px 14px var(--primary-glow);
+      transition: all 0.2s ease;
+    }
+
+    .next-btn:hover {
+      background: #9d42f5;
+      transform: translateY(-1px);
+    }
+
+    /* Hint System */
+    .hint-container {
+      margin-top: -10px;
+      margin-bottom: 20px;
+    }
+
+    .hint-toggle {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .hint-toggle:hover {
+      color: var(--amber);
+    }
+
+    .hint-content {
+      display: none;
+      background: rgba(255, 170, 0, 0.05);
+      border: 1px dashed rgba(255, 170, 0, 0.3);
+      padding: 10px 15px;
+      border-radius: 6px;
+      color: #ffe0a3;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+
+    /* Achievements Sidebar/Panel */
+    .achievements-panel {
+      width: 100%;
+      max-width: 800px;
+      background: var(--bg-card);
+      border-radius: 16px;
+      border: 1px solid #23263a;
+      padding: 20px 30px;
+    }
+
+    .panel-title {
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+      color: var(--text-muted);
+      border-bottom: 1px solid #23263a;
+      padding-bottom: 8px;
+    }
+
+    .achievements-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+    }
+
+    .achievement-card {
+      background: #1a1d30;
+      border: 1px solid #2d314e;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0.4;
+      transition: all 0.3s ease;
+    }
+
+    .achievement-card.unlocked {
+      opacity: 1;
+      border-color: var(--amber);
+      background: linear-gradient(145deg, #1a1d30, #24221c);
+      box-shadow: 0 4px 10px rgba(255,170,0,0.1);
+    }
+
+    .achievement-icon {
+      font-size: 1.8rem;
+    }
+
+    .achievement-info h4 {
+      font-size: 0.9rem;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .achievement-info p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Popup notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(90deg, #ffaa00, #ff7700);
+      color: #000;
+      font-weight: bold;
+      padding: 15px 25px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* End Screen layout */
+    .end-screen {
+      text-align: center;
+      display: none;
+      padding: 20px 0;
+    }
+
+    .end-title {
+      font-size: 2.2rem;
+      color: var(--correct);
+      margin-bottom: 15px;
+    }
+
+    .end-stat {
+      font-size: 1.3rem;
+      margin: 10px 0;
+      color: #fff;
+    }
+
+    .restart-btn {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: #fff;
+      padding: 12px 30px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 25px;
+      transition: all 0.2s ease;
+    }
+
+    .restart-btn:hover {
+      background: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Game Container -->
+  <div class="container" id="gameContainer">
+    <h1>Waking Nightmare</h1>
+    <div class="subtitle">Sleep Lab Shift 404 • AP Psych Interactive Simulation</div>
+
+    <div id="activePlay">
+      <!-- HUD Header -->
+      <div class="hud">
+        <div class="hud-item">PATIENT: <span class="hud-value" id="currentNum">1</span>/10</div>
+        <div class="hud-item">LAB BALANCE: $<span class="hud-value score" id="scoreDisplay">0</span></div>
+        <div class="hud-item">STREAK MULTIPLIER: <span class="hud-value multiplier" id="streakDisplay">1.0x</span></div>
+      </div>
+
+      <!-- Progress Top -->
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <!-- Question Core -->
+      <div class="question-box">
+        <div class="tag" id="topicTag">LOADING SYSTEM...</div>
+        <div class="question-text" id="questionText">Initializing diagnostic monitoring lines...</div>
+      </div>
+
+      <!-- Hint System -->
+      <div class="hint-container">
+        <button class="hint-toggle" id="hintToggle" onclick="toggleHint()">🔎 Request Lab Database Clue</button>
+        <div class="hint-content" id="hintContent"></div>
+      </div>
+
+      <!-- Options Area -->
+      <div class="options-grid" id="optionsGrid"></div>
+
+      <!-- Post-Choice Feedback Banner -->
+      <div class="feedback-box" id="feedbackBox">
+        <div class="feedback-title" id="feedbackTitle">Diagnostic Analysis</div>
+        <div class="feedback-text" id="feedbackText"></div>
+      </div>
+
+      <!-- Next Action Control -->
+      <div class="action-row">
